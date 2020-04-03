@@ -77,6 +77,79 @@ def login(request):
         responseData['message'] = 'Invalid Request'
         return JsonResponse(responseData, status=400)
 
+def clientMovies(request):
+    if request.method == 'POST':
+        response_data = {}
+        if 'user-api-key' in request.headers:
+        #DECLARE RESPONSE
+            if checkJson().isJson(request.body) == True:
+
+                #CHECK JSON CONTENT
+                jsonData = json.loads(request.body)
+                if 'user' not in jsonData:
+                    response_data['result'] = 'error'
+                    response_data['message'] = 'user is required'
+                    return JsonResponse(response_data, status=401)
+                elif 'password' not in jsonData:
+                    response_data['result'] = 'error'
+                    response_data['message'] = 'password is required'
+                    return JsonResponse(response_data, status=401)
+
+                #CHECK IF USER EXITST
+                try:
+                    objU = ApiUsers.objects.get(user = jsonData['user'])
+                except:
+                    response_data['result'] = 'error'
+                    response_data['message'] = 'The user does not exist or the password is incorrect'
+                    return JsonResponse(response_data, status=401)
+
+                #TAKE PASSWORD OF THE USER
+                noHashPassword = jsonData['password']
+                hashedPassword = objU.password
+
+                #CHECK IF PASSWORD IS CORRECT
+
+                if check_password(noHashPassword, hashedPassword) == False:
+                    response_data['result'] = 'error'
+                    response_data['message'] = 'The user does not exist or the password is incorrect'
+                    return JsonResponse(response_data, status=401)
+
+                #CHECK IF USER HAS API-KEY
+                if objU.api_key == request.headers["user-api-key"]:
+                    response_data['result'] = 'success'
+                    response_data["movie"] = {}
+                    cont = 0
+                    for i in Movie.objects.all():
+                        response_data["movie"][cont] = {}
+                        response_data["movie"][cont]['MovieID'] = i.movieid
+                        response_data["movie"][cont]['MovieTitle'] = i.movietitle
+                        response_data["movie"][cont]['ReleaseDate'] = i.releasedate
+                        response_data["movie"][cont]['ImageUrl'] = i.imageurl
+                        response_data["movie"][cont]['Description'] = i.description
+                        cont = cont + 1
+
+                    return JsonResponse(response_data, status = 200)
+                else:
+                    response_data['result'] = 'error'
+                    response_data['message'] = 'Invalid Api-key'
+                    return JsonResponse(response_data, status=401)
+            else:
+                response_data['result'] = 'error'
+                response_data['message'] = 'Invalid Json'
+                return JsonResponse(response_data, status=400)
+        else:
+            response_data['result'] = 'error'
+            response_data['message'] = 'user-api-key is required'
+            return JsonResponse(response_data, status=400)
+
+
+    else:
+        responseData = {}
+        responseData['result'] = 'error'
+        responseData['message'] = 'Invalid Request'
+        return JsonResponse(responseData, status=400)
+
+
 
 def makepassword(request,password):
     hashPassword = make_password(password)
