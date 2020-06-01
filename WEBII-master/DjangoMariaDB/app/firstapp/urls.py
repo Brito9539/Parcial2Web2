@@ -5,5 +5,5 @@ from . import views
 urlpatterns = [
     path('client/login',views.login,name='login'),
     path('generate_password/<str:password>',views.makepassword,name='makepassword'),
-    path('client/movies', views.clientMovies, name='clientMovies')
+    path('vista', views.vista, name='vista'),
 ]
